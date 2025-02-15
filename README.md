@@ -10,8 +10,8 @@ Another feature added is to increase or decrease day length (and corresponding n
 How to use
 ==========
 
-See [![this video]](http://youtu.be/u95BEq3bk7Q) 
-and [![this video]](http://youtu.be/nZst7ETP-w8) on general use of the stc1000p and on setting up temperature profiles. 
+See [this video](http://youtu.be/u95BEq3bk7Q) 
+and [this video](http://youtu.be/nZst7ETP-w8) on general use of the stc1000p and on setting up temperature profiles. 
 
 
  
