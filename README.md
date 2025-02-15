@@ -31,6 +31,8 @@ Only five profiles are possible instead of ten due to reduced memory. The defaul
 * Pr3: Heat-loving plants (24 and 12 degrees) Feb 21 till end May - 10 hrs 15 mins daylight to start
  
 * Pr4: Overwintering crops Sep 18 to Nov 18 - 12 hrs 31 mins daylight to start and reduce daylight
+  
+The last value in the temperature profile (dh9) is now used to keep track of how many repititions (i.e. days) the profile has run for. This can be checked in the profile settings.
 		
 
 
