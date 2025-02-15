@@ -15,10 +15,10 @@ and [this video](http://youtu.be/nZst7ETP-w8) on general use of the stc1000p and
 
 To use the heated bench day/night function, ramping should be enabled and only 5 setpoints used (marked as * below). The ramp is 2 hours of twilight in morning and evening. Profiles should look like this:
 
-*-----day-----*                     *
-							        \				               /
-							         \			 	            /
-							          *-----night-----*
+\*-----day-----\*		     \*				
+	        \		    /
+		 \		   /
+		\*-----night-----\*
 						
  Only five profiles are possible instead of ten due to reduced memory. The default profiles are as follows:
  
