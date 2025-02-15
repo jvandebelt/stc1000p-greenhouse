@@ -15,22 +15,25 @@ and [this video](http://youtu.be/nZst7ETP-w8) on general use of the stc1000p and
 
 To use the heated bench day/night function, ramping should be enabled and only 5 setpoints used (marked as * below). The ramp is 2 hours of twilight in morning and evening. Profiles should look like this:
 
-\*-----day-----\*		     \*				
+\*-----day-----\*		     \*		
+
 	        \		    /
+	 
 		 \		   /
+   
 		\*-----night-----\*
 						
- Only five profiles are possible instead of ten due to reduced memory. The default profiles are as follows:
+Only five profiles are possible instead of ten due to reduced memory. The default profiles are as follows:
  
- Pr0: Normal (20 and 12 degrees) day/night cycle Jan 14 till end May - 8 hrs 1 mins daylight to start
+* Pr0: Normal (20 and 12 degrees) day/night cycle Jan 14 till end May - 8 hrs 1 mins daylight to start
  
- Pr1: Cooler (18 and 12 degrees) day/night cycle Jan 14 till end May
+* Pr1: Cooler (18 and 12 degrees) day/night cycle Jan 14 till end May
  
- Pr2: Normal day/night cycle Feb 4 till May 31 - 9 hrs 9 mins daylight to start
+* Pr2: Normal day/night cycle Feb 4 till May 31 - 9 hrs 9 mins daylight to start
  
- Pr3: Heat-loving plants (24 and 12 degrees) Feb 21 till end May - 10 hrs 15 mins daylight to start
+* Pr3: Heat-loving plants (24 and 12 degrees) Feb 21 till end May - 10 hrs 15 mins daylight to start
  
- Pr4: Overwintering crops Sep 18 to Nov 18 - 12 hrs 31 mins daylight to start and reduce daylight
+* Pr4: Overwintering crops Sep 18 to Nov 18 - 12 hrs 31 mins daylight to start and reduce daylight
 		
 
 
