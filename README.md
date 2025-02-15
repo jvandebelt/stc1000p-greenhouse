@@ -11,7 +11,22 @@ How to use
 ==========
 
 See [this video](http://youtu.be/u95BEq3bk7Q) 
-and [this video](http://youtu.be/nZst7ETP-w8) on general use of the stc1000p and on setting up temperature profiles. 
+and [this video](http://youtu.be/nZst7ETP-w8) on general use of the stc1000p and on setting up temperature profiles. The greenhouse code enabeles profiles to be repeated up to 999 times. By setting the profiles to be 24 hours, we can set a day and night temperature which is then repeated. 
+
+To use the heated bench day/night function, ramping should be enabled and only 5 setpoints used (marked as * below). The ramp is 2 hours of twilight in morning and evening. Profiles should look like this:
+
+*-----day-----*                     *
+							        \				               /
+							         \			 	            /
+							          *-----night-----*
+						
+ Only five profiles are possible instead of ten due to reduced memory. The default profiles are as follows:
+ Pr0: Normal (20 and 12 degrees) day/night cycle starting Jan 14 and finishing end of May - 8 hrs 1 mins daylight to start
+ Pr1: Cooler (18 and 12 degrees) day/night cycle starting Jan 14 and finishing end of May 
+ Pr2: Normal day/night cycle starting Feb 4 - 9 hrs 9 mins daylight to start
+ Pr3: Heat-loving plants (24 and 12 degrees) starting Feb 21 finishing end of May - 10 hrs 15 mins daylight to start
+ Pr4: Overwintering crops: Sep 18 to Nov 18 - start with 12 hrs 31 mins daylight and reduce daylight
+		
 
 
  
