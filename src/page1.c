@@ -40,7 +40,7 @@
 
 #ifndef OVBSC
 	/* Help to convert menu item number and config item number to an EEPROM config address */
-	#define MI_CI_TO_EEADR(mi, ci)		((mi)*19 + (ci))
+	#define MI_CI_TO_EEADR(mi, ci)		((mi)*20 + (ci))
 
 	extern unsigned int heating_delay;
 	extern unsigned int cooling_delay;
@@ -81,8 +81,8 @@ static int check_config_value(int config_value, unsigned char eeadr){
 #elif defined(RH)
 #else
 	if(eeadr < EEADR_MENU){
-		while(eeadr >= 19){
-			eeadr-=19;
+		while(eeadr >= 20){
+			eeadr-=20;
 		}
 		if(!(eeadr & 0x1)){
 			t_min = TEMP_MIN;
@@ -99,8 +99,9 @@ static int check_config_value(int config_value, unsigned char eeadr){
 			t_min = TEMP_CORR_MIN;
 			t_max = TEMP_CORR_MAX;
 //		} else if(type == t_duration){
-		} else if(type == t_boolean){
-			t_max = 1;
+//		} else if(type == t_repetition){
+		} else if(type == t_ramp){
+			t_max = 3;
 #if defined(OVBSC)
 		} else if(type == t_percentage){
 			t_min = -200;
@@ -138,7 +139,7 @@ static int check_config_value(int config_value, unsigned char eeadr){
 		} else if(type == t_delay){
 			t_max = 60;
 		} else if(type == t_runmode){
-			t_max = 6;
+			t_max = 5;
 #endif
 		}
 	}
@@ -244,6 +245,7 @@ static unsigned char _buttons = 0;
  * arguments: none
  * returns: nothing
  */
+ 
 void button_menu_fsm(){
 	{
 		unsigned char trisc, latb;
@@ -294,7 +296,7 @@ void button_menu_fsm(){
 			menustate = menu_power_down_wait;
 		} else if(_buttons && eeprom_read_config(EEADR_POWER_ON)){
 #endif
-			if (BTN_PRESSED(BTN_UP | BTN_DOWN)) {
+			 if (BTN_PRESSED(BTN_UP | BTN_DOWN)) {
 				menustate = menu_show_version;
 			} else if(BTN_PRESSED(BTN_UP)){
 				menustate = menu_show_state_up;
@@ -319,7 +321,7 @@ void button_menu_fsm(){
 		if(!BTN_HELD(BTN_UP | BTN_DOWN)){
 			menustate=menu_idle;
 		}
-		break;
+		break; 
 
 	case menu_show_state_up:
 #if defined(OVBSC)
@@ -467,14 +469,20 @@ void button_menu_fsm(){
 		led_e.e_deg = 1;
 		led_e.e_c = 1;
 		if(menu_item < MENU_ITEM_NO){
-			if(config_item & 0x1) {
+			if(config_item == 19) { // Added repetitions at end
+				led_10.raw = LED_r;
+				led_1.raw = LED_e;
+				led_01.raw = LED_P;
+			}
+			else if(config_item & 0x1) {
 				led_10.raw = LED_d;
 				led_1.raw = LED_h;
+				led_01.raw = led_lookup[(config_item >> 1)];
 			} else {
 				led_10.raw = LED_S;
 				led_1.raw = LED_P;
+				led_01.raw = led_lookup[(config_item >> 1)];
 			}
-			led_01.raw = led_lookup[(config_item >> 1)];
 		} else /* if(menu_item == 6) */{
 			led_10.raw = menu[config_item].led_c_10;
 			led_1.raw = menu[config_item].led_c_1;
@@ -542,7 +550,7 @@ void button_menu_fsm(){
 		} else if(BTN_RELEASED(BTN_UP)){
 			config_item++;
 			if(menu_item < MENU_ITEM_NO){
-				if(config_item >= 19){
+				if(config_item >= 20){
 					config_item = 0;
 				}
 			} else {
@@ -557,8 +565,8 @@ void button_menu_fsm(){
 		} else if(BTN_RELEASED(BTN_DOWN)){
 			config_item--;
 			if(menu_item < MENU_ITEM_NO){
-				if(config_item > 18){
-					config_item = 18;
+				if(config_item > 19){
+					config_item = 19;
 				}
 			} else {
 				if(config_item > MENU_SIZE-1){
@@ -569,10 +577,11 @@ chk_skip_menu_item:
 				if((unsigned char)eeprom_read_config(EEADR_MENU_ITEM(rn)) >= THERMOSTAT_MODE)
 #endif
 				{
+					// Keep reps visible so we can check if days keep in sync - starts at sunrise
 					if(config_item == St){
-						config_item += 2;
-					}else if(config_item == dh){
-						config_item -= 2;
+						config_item += 2;	// change this to 3 to hide reps as well
+					}else if(config_item == dh){ // change this to rep to hide rep
+						config_item -= 2; // change this to 3 to hide reps
 					}
 				}
 			}
@@ -711,6 +720,7 @@ chk_cfg_acc_label:
 					if(config_item == rn){
 						// When setting runmode, clear current step & duration
 						eeprom_write_config(EEADR_MENU_ITEM(St), 0);
+						eeprom_write_config(EEADR_MENU_ITEM(rep), 0);
 #if defined(MINUTE)
 						curr_dur = 0;
 #else

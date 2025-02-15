@@ -60,8 +60,8 @@
 
 /* Define STC-1000+ version number (XYY, X=major, YY=minor) */
 /* Also, keep track of last version that has changes in EEPROM layout */
-#define STC1000P_VERSION			(109)
-#define STC1000P_EEPROM_VERSION		(12)
+#define STC1000P_VERSION			(110)
+#define STC1000P_EEPROM_VERSION		(13)
 
 /* Clear Watchdog */
 #define ClrWdt() 					{ __asm CLRWDT __endasm; }
@@ -163,6 +163,8 @@ enum e_item_type {
 #endif
 	t_step,
 	t_delay,
+	t_repetition,			/* added repetitions for cycles */
+	t_ramp,					/* modified ramping to include daylight update */
 	t_runmode,
 #endif 
 	t_duration,
@@ -299,12 +301,14 @@ enum e_item_type {
 		_(SA, 	LED_S, 	LED_A, 	LED_OFF, 	t_sp_alarm,			0)				\
 		_(St, 	LED_S, 	LED_t, 	LED_OFF, 	t_step,				0)				\
 		_(dh, 	LED_d, 	LED_h, 	LED_OFF, 	t_duration,			0)				\
-		_(cd, 	LED_c, 	LED_d, 	LED_OFF, 	t_delay,			5)				\
-		_(hd, 	LED_h, 	LED_d, 	LED_OFF, 	t_delay,			2)				\
-		_(rP, 	LED_r, 	LED_P, 	LED_OFF, 	t_boolean,			0)				\
-		_(rn, 	LED_r, 	LED_n, 	LED_OFF, 	t_runmode,			6)
+		_(rep, 	LED_r, 	LED_e, 	LED_P, 		t_repetition,		0)				\
+		_(cd, 	LED_c, 	LED_d, 	LED_OFF, 	t_delay,			2)				\
+		_(hd, 	LED_h, 	LED_d, 	LED_OFF, 	t_delay,			1)				\
+		_(rP, 	LED_r, 	LED_P, 	LED_OFF, 	t_ramp,				2)				\
+		_(rn, 	LED_r, 	LED_n, 	LED_OFF, 	t_runmode,			5)
 
 #endif
+//_(dlu, 	LED_d, 	LED_L, 	LED_u, 		t_dlu,				0)				
 
 #define ENUM_VALUES(name, led10ch, led1ch, led01ch, type, default_value) \
     name,
@@ -318,12 +322,14 @@ enum menu_enum {
 #if defined(OVBSC) || defined(RH)
 	#define EEADR_MENU				0
 #else
-	#define NO_OF_PROFILES			6
+	#define NO_OF_PROFILES			5
 	#define MENU_ITEM_NO			NO_OF_PROFILES
 	#define THERMOSTAT_MODE			NO_OF_PROFILES
-
-	#define EEADR_PROFILE_SETPOINT(profile, step)	(((profile)*19) + ((step)<<1))
-	#define EEADR_PROFILE_DURATION(profile, step)	EEADR_PROFILE_SETPOINT(profile, step) + 1
+	
+	/* #define EEADR_PROFILE_SETPOINT(profile, step)	(((profile)*19) + ((step)<<1)) */
+	/* add Repetition at end of profile */
+	/* last step has no duration so we can use that for repetitions */
+	#define EEADR_PROFILE_SETPOINT(profile, step)	(((profile)*20) + ((step)<<1))
 	#define EEADR_MENU								EEADR_PROFILE_SETPOINT(NO_OF_PROFILES, 0)
 	#define EEADR_POWER_ON							127
 #endif
@@ -457,5 +463,7 @@ extern void value_to_led(int value, unsigned char decimal);
 
 /* Declare functions and variables from Page 1 */
 extern void button_menu_fsm();
+//extern int check_dlu(unsigned char step, unsigned int dlu);
+//extern unsigned int check_dlu(unsigned int step, unsigned int dur);
 
 #endif // __STC1000P_H__

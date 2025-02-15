@@ -28,12 +28,26 @@
 /* Initial EEPROM data */
 __code const int __at(0xF000) eedata[] = {
 #if !(defined(OVBSC) || defined(RH))
-			160, 24, 170, 24, 180, 24, 190, 24, 200, 144, 250, 48, 40, 0, 0, 0, 0, 0, 0, // Pr0 (SP0, dh0, ..., dh8, SP9)
-			160, 24, 170, 24, 180, 24, 190, 24, 200, 144, 250, 48, 40, 0, 0, 0, 0, 0, 0, // Pr1 (SP0, dh0, ..., dh8, SP9)
-			160, 24, 170, 24, 180, 24, 190, 24, 200, 144, 250, 48, 40, 0, 0, 0, 0, 0, 0, // Pr2 (SP0, dh0, ..., dh8, SP9)
-			160, 24, 170, 24, 180, 24, 190, 24, 200, 144, 250, 48, 40, 0, 0, 0, 0, 0, 0, // Pr3 (SP0, dh0, ..., dh8, SP9)
-			160, 24, 170, 24, 180, 24, 190, 24, 200, 144, 250, 48, 40, 0, 0, 0, 0, 0, 0, // Pr4 (SP0, dh0, ..., dh8, SP9)
-			160, 24, 170, 24, 180, 24, 190, 24, 200, 144, 250, 48, 40, 0, 0, 0, 0, 0, 0, // Pr5 (SP0, dh0, ..., dh8, SP9)
+			// ramping should be enabled and only 5 setpoints used				
+			// profile should look like this
+			/*
+			   -----day-----
+							\				  /
+							 \			 	 /
+							  -----night-----
+						
+			// Ramp is 2 hours of twilight in morning and evening.
+			// JC turn on hotbed Jan week 2 at 18 degrees C
+			// Keep hotbed on till end May - 137 days
+			*/
+			// each day sunrise is 1.5 mins earlier. Therefore total day + night = 1438.5 mins. 
+			// Take one min off night duration (so day + night = 1439 mins) and every even night take extra min off
+			200, 481, 200, 120, 120, 718, 120, 120, 200, 0, 0, 0, 0, 0, 0, 0, 14, 1, 0, 137, 	// Pr0 (SP0, dh0, ..., SP9, reps) 	// Normal day/night times starting Jan 14 - 8 hrs 1 mins daylight
+			180, 481, 180, 120, 100, 718, 100, 120, 180, 0, 0, 0, 0, 0, 0, 0, 14, 1, 0, 137, 	// Pr1 (SP0, dh0, ..., SP9, reps) 	// Cooler day/night times starting Jan 14 - 8 hrs 1 mins daylight
+			200, 549, 200, 120, 100, 650, 100, 120, 200, 0, 0, 0, 0, 0, 0, 0, 4,  2, 0, 117, 	// Pr2 (SP0, dh0, ..., SP9, reps) 	// Day/night times starting Feb 4 - 9 hrs 9 mins daylight
+			240, 615, 220, 120, 140, 584, 140, 120, 240, 0, 0, 0, 0, 0, 0, 0, 21, 2, 0, 117,	// Pr3 (SP0, dh0, ..., SP9, reps)	// Heat-loving plants starting Feb 21 - 10 hrs 15 mins daylight
+			200, 2,   200, 1,   120, 5,   120, 1,   200, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 2,		// test sequence
+			//200, 750, 200, 120, 120, 451, 120, 120, 200, 0, 0, 0, 0, 0, 0, 0, 18, 9, 0, 60, 	// Pr4 (SP0, dh0, ..., SP9, reps)	// Overwintering crops: Sep 18 to Nov 18 - start with 12 hrs 31 mins daylight
 #endif
 			MENU_DATA(EEPROM_DEFAULTS)
 };

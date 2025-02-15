@@ -475,6 +475,7 @@ static void program_fsm(){
 
 #else // !OVBSC !RH
 
+
 /* To be called once every hour on the hour.
  * Updates EEPROM configuration when running profile.
  */
@@ -483,10 +484,8 @@ static void update_profile(){
 
 	// Running profile?
 	if (profile_no < THERMOSTAT_MODE) {
-		unsigned char curr_step = eeprom_read_config(EEADR_MENU_ITEM(St));
-		unsigned char profile_step_eeaddr;
-		unsigned int profile_step_dur;
-		int profile_next_step_sp;
+		int curr_step = eeprom_read_config(EEADR_MENU_ITEM(St));
+		
 #if defined MINUTE
 		curr_dur++;
 #else
@@ -494,33 +493,91 @@ static void update_profile(){
 #endif
 
 		// Sanity check
-		if(curr_step > 8){
-			curr_step = 8;
-		}
+		// Had to remove this for memory
+		//if(curr_step > 8){
+		//	curr_step = 8;
+		//}
 
-		profile_step_eeaddr = EEADR_PROFILE_SETPOINT(profile_no, curr_step);
-		profile_step_dur = eeprom_read_config(profile_step_eeaddr + 1);
-		profile_next_step_sp = eeprom_read_config(profile_step_eeaddr + 2);
+		unsigned char profile_step_eeaddr = EEADR_PROFILE_SETPOINT(profile_no, curr_step);
+		unsigned int profile_step_dur = eeprom_read_config(profile_step_eeaddr + 1);
+		int profile_next_step_sp = eeprom_read_config(profile_step_eeaddr + 2);
+		unsigned char ramp = eeprom_read_config(EEADR_MENU_ITEM(rP));
+		unsigned int curr_rep = eeprom_read_config(EEADR_MENU_ITEM(rep));
 
 		// Reached end of step?
 		if (curr_dur >= profile_step_dur) {
+			
+			/* For greenhouse profiles */
+			
+			/* ramping should be enabled and only 5 setpoints used			*/	
+			/* profile should look like this								*/
+			/*
+			   *----day----*				   *
+							\				  /
+							 \			 	 /
+							  *----night----*
+			*/
+			// ramp == 2 means we are increasing day length and decreasing night
+			// ramp == 3 means we are decreasing day length and increasing night
+			// curr_step == 0 means day, curr_step == 2 means night	
+			
+			// Check daylight savings and update profile step_dur
+			if (ramp > 1 && !(curr_step & 0x1) && !(curr_step & 0x4))   { // Check step even & less than 4 => 0 or 2
+				/* (ramp + 1 - step): 	2:0		+		011
+										2:2		-		001
+										3:0		-		100
+										3:2		+		010
+					=> filter on 2nd bit
+				*/
+				if ((ramp + 1 - curr_step) & 0x2) { // 2:0 and 3:2
+					profile_step_dur += 3;		
+					// roughly 3 mins extra (less) daylight per day in Ireland
+				}
+				 // 2:2 and 3:0
+				 // take off two minutes first night (day), take four minutes every second night (day) to keep sunrise in sync
+				else if (curr_rep & 0x1 ) {		
+						profile_step_dur -= (4 - curr_step);	// night => step 2 => take off 2; day => step 0 => take off 4
+				}		
+				else {
+						profile_step_dur -= (2 + curr_step);	// night => step 2 => take off 4; day => step 0 => take off 2
+				}
+			}
+			// Update if new duration in bounds
+			if (profile_step_dur && profile_step_dur < 1000) {
+				eeprom_write_config(profile_step_eeaddr + 1, profile_step_dur);
+			}
+			
+			// Is this the last step (next step is number 9 or next step duration is 0)?
+			if (curr_step & 0x8 || (eeprom_read_config(profile_step_eeaddr + 3))) {
+				if (curr_rep < eeprom_read_config(EEADR_PROFILE_SETPOINT(profile_no, 9) + 1)) {
+					// set setpoint value to step 0 sp 
+					profile_next_step_sp = eeprom_read_config(profile_step_eeaddr - curr_step*2);
+					// update reps
+					curr_rep++;
+				}
+				else {
+					// Switch to thermostat mode.
+					// reset repetitions to 0
+					curr_rep = 0;
+					// Switch to thermostat mode.
+					eeprom_write_config(EEADR_MENU_ITEM(rn), THERMOSTAT_MODE);
+				}
+				// repeat current profile: step = 0 
+				// or go thermostat mode: step = 0
+				curr_step = -1;
+				eeprom_write_config(EEADR_MENU_ITEM(rep), curr_rep);
+			}
+			// Update step
+			eeprom_write_config(EEADR_MENU_ITEM(St), curr_step + 1);
 			// Update setpoint with value from next step
 #if defined MINUTE
 			setpoint = profile_next_step_sp;
 #endif
 			eeprom_write_config(EEADR_MENU_ITEM(SP), profile_next_step_sp);
-			// Is this the last step (next step is number 9 or next step duration is 0)?
-			if (curr_step == 8 || eeprom_read_config(profile_step_eeaddr + 3) == 0) {
-				// Switch to thermostat mode.
-				eeprom_write_config(EEADR_MENU_ITEM(rn), THERMOSTAT_MODE);
-				return; // Fastest way out...
-			}
+			
 			// Reset duration
-			curr_dur = 0;
-			// Update step
-			curr_step++;
-			eeprom_write_config(EEADR_MENU_ITEM(St), curr_step);
-		} else if(eeprom_read_config(EEADR_MENU_ITEM(rP))) { // Is ramping enabled?
+			curr_dur = 0;					
+		} else if(ramp) { // Is ramping enabled?
 			int profile_step_sp = eeprom_read_config(profile_step_eeaddr);
 			unsigned int t = curr_dur << 6;
 			long sp = 32;
@@ -596,9 +653,10 @@ static void temperature_control(){
 #else
 		if (temperature > setpoint + hysteresis) {
 #endif
-			if (cooling_delay) {
-				led_e.e_cool = led_e.e_cool ^ (cooling_delay & 0x1); // Flash to indicate cooling delay
-			} else {
+			if (!cooling_delay) {
+				// turn off flash feature to save memory
+				//led_e.e_cool = led_e.e_cool ^ (cooling_delay & 0x1); // Flash to indicate cooling delay
+			//} else {
 				LATA4 = 1;
 			}
 #if defined PB2
@@ -606,9 +664,10 @@ static void temperature_control(){
 #else
 		} else if (temperature < setpoint - hysteresis) {
 #endif
-			if (heating_delay) {
-				led_e.e_heat = led_e.e_heat ^ (heating_delay & 0x1); // Flash to indicate heating delay
-			} else {
+			if (!heating_delay) {
+				// turn off flash feature to save memory
+				//led_e.e_heat = led_e.e_heat ^ (heating_delay & 0x1); // Flash to indicate heating delay
+			//} else {
 				LATA5 = 1;
 			}
 		}
@@ -1122,6 +1181,7 @@ static void fo433_fsm(){
 /*
  * Main entry point.
  */
+
 void main(void) __naked {
 	unsigned int millisx60 = 0;
 	unsigned int ad_filter = (512L << FILTER_SHIFT);
@@ -1272,11 +1332,11 @@ void main(void) __naked {
 #endif
 
 				if(LATA0){ // On alarm, disable outputs
-					if(MENU_IDLE){ // Make it less anoying to nagivate menu during alarm
+					/* if(MENU_IDLE){ // Make it less anoying to nagivate menu during alarm
 						led_10.raw = LED_A;
 						led_1.raw = LED_L;
 						led_e.raw = led_01.raw = LED_OFF;
-					}
+					} */
 					LATA4 = 0;
 					LATA5 = 0;
 					cooling_delay = heating_delay = 60;
